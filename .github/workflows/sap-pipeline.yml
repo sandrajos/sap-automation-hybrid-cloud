@@ -1,0 +1,41 @@
+name: SAP Automation Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  sap-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y unzip python3-pip ansible
+
+      - name: Install Terraform
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update
+          sudo apt install -y terraform
+
+      - name: Install Python dependencies
+        run: |
+          pip3 install psutil
+
+      - name: Make pipeline script executable
+        run: |
+          chmod +x run_full_pipeline.sh
+
+      - name: Run full SAP automation pipeline
+        run: |
+          ./run_full_pipeline.sh
+
+

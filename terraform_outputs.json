@@ -1,0 +1,7 @@
+{
+  "sap_vm_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "sap-server-01"
+  }
+}
