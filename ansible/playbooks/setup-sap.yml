@@ -2,10 +2,13 @@
   hosts: sap_servers
   gather_facts: false
 
+  vars:
+    project_root: "{{ playbook_dir }}/../.."
+    
   tasks:
     - name: Check SAP VM file exists
       stat:
-        path: "/mnt/c/Users/hp/sap-automation-hybrid-cloud/terraform/sap-server-01.txt"
+        path: "{{ project_root }}/terraform/sap-server-01.txt"
       register: sap_vm_file
 
     - name: Print SAP VM status
