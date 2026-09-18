@@ -1,34 +1,39 @@
-#!/bin/bash
-# run_full_pipeline.sh
-# Full SAP automation pipeline: Terraform → Ansible → Python validation
+#!/usr/bin/env bash
 
-set -e
-set -o pipefail
+set -euo pipefail
 
-# --------------------------
-# 1️⃣ Terraform: Init & Apply
-# --------------------------
-echo "=== 1️⃣ Terraform: Init & Apply ==="
-[ -d terraform ] || { echo "❌ Terraform folder missing"; exit 1; }
-cd terraform
-terraform init
-terraform apply -auto-approve
-cd ..
+echo "=============================================="
+echo " SAP Automation Validation Pipeline"
+echo " Terraform -> Ansible -> Python"
+echo "=============================================="
 
-# --------------------------
-# 2️⃣ Ansible: Configure SAP VM
-# --------------------------
-echo "=== 2️⃣ Ansible: Configure SAP VM ==="
-[ -f ansible/playbooks/setup-sap.yml ] || { echo "❌ Ansible playbook not found"; exit 1; }
+echo ""
+echo "=== 1. Terraform: Init & Apply ==="
+
+if [[ ! -d "terraform" ]]; then
+    echo "ERROR: Terraform directory not found."
+    exit 1
+fi
+
+terraform -chdir=terraform init -input=false
+terraform -chdir=terraform apply -auto-approve -input=false
+
+echo ""
+echo "=== 2. Ansible: Configuration Validation ==="
+
+if [[ ! -f "ansible/playbooks/setup-sap.yml" ]]; then
+    echo "ERROR: Ansible playbook not found."
+    exit 1
+fi
+
 ansible-playbook ansible/playbooks/setup-sap.yml -i ansible/inventory.ini
 
-# --------------------------
-# 3️⃣ Python: SAP Readiness Validation
-# --------------------------
-echo "=== 3️⃣ Python: SAP Readiness Validation ==="
-python3 scripts/validate_sap_readiness.py || echo "⚠ Python readiness check had an issue, but pipeline continues"
+echo ""
+echo "=== 3. Python: SAP Readiness Validation ==="
 
-# --------------------------
-# ✅ Pipeline Complete
-# --------------------------
-echo "=== ✅ Pipeline Complete ==="
+python3 scripts/validate_sap_readiness.py
+
+echo ""
+echo "=============================================="
+echo " Pipeline completed successfully"
+echo "=============================================="

@@ -1,17 +1,23 @@
-- name: Configure SAP Server
+---
+- name: Validate SAP server provisioning
   hosts: sap_servers
   gather_facts: false
 
   vars:
     project_root: "{{ playbook_dir }}/../.."
-    
-  tasks:
-    - name: Check SAP VM file exists
-      stat:
-        path: "{{ project_root }}/terraform/sap-server-01.txt"
-      register: sap_vm_file
+    sap_server_file: "{{ project_root }}/terraform/sap-server-01.txt"
 
-    - name: Print SAP VM status
-      debug:
-        msg: "SAP VM is ready!"
-      when: sap_vm_file.stat.exists
+  tasks:
+    - name: Check simulated SAP server artifact
+      ansible.builtin.stat:
+        path: "{{ sap_server_file }}"
+      register: sap_server
+
+    - name: Fail when Terraform artifact is missing
+      ansible.builtin.fail:
+        msg: "SAP server artifact was not created by Terraform."
+      when: not sap_server.stat.exists
+
+    - name: Confirm SAP server provisioning
+      ansible.builtin.debug:
+        msg: "SAP server artifact is present and ready for validation."

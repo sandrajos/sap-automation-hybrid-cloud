@@ -1,0 +1,31 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+
+# Terraform/generated files
+terraform_outputs.json
+terraform/sap-server-01.txt
+
+# Local Terraform/provider binaries
+terraform_*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# IDE / Visual Studio
+.vs/
+.vscode/
+
+# Ansible/editor temporary files
+*.save
+
+# OS
+.DS_Store
+Thumbs.db

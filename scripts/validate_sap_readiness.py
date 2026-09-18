@@ -1,83 +1,77 @@
-﻿#!/usr/bin/env python3
-"""
-validate_sap_readiness.py
--------------------------
-Checks basic SAP HANA system prerequisites:
-- OS type and version
-- CPU cores
-- RAM
-- Disk space
-- Key ports (e.g., HANA SQL port)
-"""
+#!/usr/bin/env python3
+"""Validate basic SAP HANA host readiness requirements."""
 
-import os
+from __future__ import annotations
+
 import platform
 import shutil
-import psutil  
 import socket
+import sys
 
-# --------------------------
-# Check OS
-# --------------------------
-def check_os():
-    os_info = platform.system() + " " + platform.release()
+import psutil
+
+
+def check_os() -> bool:
+    os_info = f"{platform.system()} {platform.release()}"
     print(f"[OS] {os_info}")
-    return os_info
+    return True
 
-# --------------------------
-# Check CPU cores
-# --------------------------
-def check_cpu(min_cores=4):
-    cores = psutil.cpu_count(logical=False)
+
+def check_cpu(min_cores: int = 4) -> bool:
+    cores = psutil.cpu_count(logical=False) or 0
     print(f"[CPU] {cores} physical cores detected")
     return cores >= min_cores
 
-# --------------------------
-# Check RAM
-# --------------------------
-def check_memory(min_gb=16):
+
+def check_memory(min_gb: int = 16) -> bool:
     mem_gb = round(psutil.virtual_memory().total / (1024**3))
     print(f"[Memory] {mem_gb} GB detected")
     return mem_gb >= min_gb
 
-# --------------------------
-# Check disk space
-# --------------------------
-def check_disk(min_gb=100, path="/"):
+
+def check_disk(min_gb: int = 100, path: str = "/") -> bool:
     free_gb = round(shutil.disk_usage(path).free / (1024**3))
     print(f"[Disk] {free_gb} GB free at {path}")
     return free_gb >= min_gb
 
-# --------------------------
-# Check network port
-# --------------------------
-def check_port(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        result = s.connect_ex(('localhost', port))
-        available = result != 0
-    print(f"[Port {port}] {'Available' if available else 'In Use'}")
+
+def check_port_available(port: int) -> bool:
+    """Check whether the example HANA SQL port is available."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        result = sock.connect_ex(("localhost", port))
+
+    available = result != 0
+    print(
+        f"[Port {port}] "
+        f"{'Available' if available else 'Already in use'}"
+    )
     return available
 
-# --------------------------
-# Main function
-# --------------------------
-def main():
-    print("=== SAP HANA Readiness Check ===\n")
 
-    all_ok = True
-    all_ok &= check_cpu()
-    all_ok &= check_memory()
-    all_ok &= check_disk()
-    all_ok &= check_port(30015)  # example SAP HANA SQL port
+def main() -> int:
+    print("=== SAP HANA Host Readiness Check ===\n")
+
+    checks = {
+        "OS": check_os(),
+        "CPU": check_cpu(),
+        "Memory": check_memory(),
+        "Disk": check_disk(),
+        "HANA SQL port": check_port_available(30015),
+    }
 
     print("\n=== Summary ===")
-    if all_ok:
-        print("✅ Environment looks ready for SAP HANA!")
-    else:
-        print("❌ Some requirements are not met. Review above logs.")
 
-# --------------------------
-# Run main
-# --------------------------
+    failed = [name for name, passed in checks.items() if not passed]
+
+    if failed:
+        print("Readiness checks failed:")
+        for name in failed:
+            print(f"  - {name}")
+        return 1
+
+    print("Environment meets the configured readiness thresholds.")
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
