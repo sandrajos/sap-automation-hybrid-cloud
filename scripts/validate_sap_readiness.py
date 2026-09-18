@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 import shutil
 import socket
@@ -17,21 +18,24 @@ def check_os() -> bool:
     return True
 
 
-def check_cpu(min_cores: int = 4) -> bool:
+def check_cpu(min_cores: int | None = None) -> bool:
+    min_cores = min_cores or int(os.getenv("SAP_MIN_CPU_CORES", "4"))
     cores = psutil.cpu_count(logical=False) or 0
-    print(f"[CPU] {cores} physical cores detected")
+    print(f"[CPU] {cores} physical cores detected (minimum: {min_cores})")
     return cores >= min_cores
 
 
-def check_memory(min_gb: int = 16) -> bool:
+def check_memory(min_gb: int | None = None) -> bool:
+    min_gb = min_gb or int(os.getenv("SAP_MIN_MEMORY_GB", "16"))
     mem_gb = round(psutil.virtual_memory().total / (1024**3))
-    print(f"[Memory] {mem_gb} GB detected")
+    print(f"[Memory] {mem_gb} GB detected (minimum: {min_gb} GB)")
     return mem_gb >= min_gb
 
 
-def check_disk(min_gb: int = 100, path: str = "/") -> bool:
+def check_disk(min_gb: int | None = None, path: str = "/") -> bool:
+    min_gb = min_gb or int(os.getenv("SAP_MIN_DISK_GB", "100"))
     free_gb = round(shutil.disk_usage(path).free / (1024**3))
-    print(f"[Disk] {free_gb} GB free at {path}")
+    print(f"[Disk] {free_gb} GB free at {path} (minimum: {min_gb} GB)")
     return free_gb >= min_gb
 
 
